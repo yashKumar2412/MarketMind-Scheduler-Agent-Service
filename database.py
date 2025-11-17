@@ -7,10 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL - can be configured via environment variable
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://user:password@localhost:5432/scheduler_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Create async engine
 engine = create_async_engine(DATABASE_URL, echo=True)

@@ -9,36 +9,30 @@ A FastAPI service for scheduling campaigns and posts with intelligent time distr
 - Automatic timezone handling using brand defaults
 - Database persistence with PostgreSQL
 - Naive scheduler (to be replaced with agentic scheduler)
+- Automatic database initialization and dummy data loading on startup
 
-## Installation
+## Prerequisites
 
-```bash
-pip install -r requirements.txt
-```
+- Docker and Docker Compose installed on your system
 
 ## Configuration
 
 Create a `.env` file by copying the example file:
 
 ```bash
-cp env.example .env
+cp env.local .env
 ```
 
-Or create a `.env` file manually with:
-```
-DATABASE_URL=postgresql+asyncpg://scheduler_user:scheduler_pass@localhost:5432/scheduler_db
-POSTGRES_USER=scheduler_user
-POSTGRES_PASSWORD=scheduler_pass
-POSTGRES_DB=scheduler_db
-POSTGRES_PORT=5432
-SCHEDULER_PORT=8000
-```
+The `.env` file should contain the following variables:
+- `POSTGRES_USER`: PostgreSQL username (default: scheduler_user)
+- `POSTGRES_PASSWORD`: PostgreSQL password (default: scheduler_pass)
+- `POSTGRES_DB`: PostgreSQL database name (default: scheduler_db)
+- `POSTGRES_PORT`: PostgreSQL port (default: 5432)
+- `SCHEDULER_PORT`: Scheduler service port (default: 8000)
 
-**Note:** The docker-compose.yml will use these values, but also has defaults if the `.env` file is not present.
+## Deployment
 
-## Running the Service
-
-### Option 1: Using Docker Compose (Recommended)
+### Using Docker Compose
 
 This will start both the PostgreSQL database and the scheduler service:
 
@@ -48,11 +42,17 @@ docker-compose up --build
 
 The API will be available at:
 - API: http://localhost:8000
-- Interactive docs: http://localhost:8000/docs
+- Interactive API docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
 
 To run in detached mode:
 ```bash
 docker-compose up -d --build
+```
+
+To view logs:
+```bash
+docker-compose logs -f scheduler
 ```
 
 To stop the services:
@@ -65,20 +65,14 @@ To stop and remove volumes (clears database):
 docker-compose down -v
 ```
 
-### Option 2: Local Development
-
-```bash
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-The API will be available at:
-- API: http://localhost:8000
-- Interactive docs: http://localhost:8000/docs
-
 ## Database Setup
 
-The service automatically creates database tables on startup. When using Docker Compose, PostgreSQL is automatically configured and started. For local development, ensure PostgreSQL is running and the database exists.
+The service automatically:
+- Creates database tables on startup
+- Clears existing tables before initialization
+- Loads dummy data for testing
+
+PostgreSQL is automatically configured and started via Docker Compose with health checks to ensure the database is ready before the scheduler service starts.
 
 ## Scheduling Logic
 
@@ -94,16 +88,35 @@ The naive scheduler distributes posts across the campaign period:
 - Creates schedule record with PENDING status
 - Generates unique UUID for schedule_id
 
+## API Endpoints
+
+### Root
+- `GET /` - Service information and available endpoints
+
+### Campaign Scheduling
+- `POST /schedule/campaign/{campaign_id}` - Schedule all posts in a campaign
+- `GET /schedule/campaign/{campaign_id}` - Get all schedules for a campaign
+
+### Post Scheduling
+- `POST /schedule/post/{post_id}` - Schedule a single post with timestamp and timezone
+- `GET /schedule/post/{post_id}` - Get the schedule for a post
+
+### Health
+- `GET /health` - Health check endpoint
+
 ## Project Structure
 
 ```
 .
-├── main.py              # FastAPI application and endpoints
+├── app.py               # FastAPI application and endpoints
 ├── service.py           # Business logic layer
 ├── models.py            # SQLAlchemy database models
 ├── database.py          # Database configuration and session management
 ├── naive_scheduler.py   # Naive scheduling logic (to be replaced with agentic_scheduler)
 ├── load_dummy_data.py   # Script to load dummy data on startup
+├── docker-compose.yml   # Docker Compose configuration
+├── Dockerfile           # Docker image definition
+├── env.local            # Environment variables template
 └── requirements.txt     # Python dependencies
 ```
 

@@ -9,7 +9,7 @@ Base = declarative_base()
 
 class ScheduleStatus(enum.Enum):
     PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
+    SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
 class Platform(enum.Enum):
